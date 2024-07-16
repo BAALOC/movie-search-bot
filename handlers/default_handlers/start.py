@@ -2,9 +2,13 @@ from telebot.types import Message
 
 from database.user_data import User
 from loader import bot
+from states.user_states import UserState
 
 
-@bot.message_handler(commands=['start'])
+# user_messages = ['привет', 'старт', 'начало', 'start', '/start']
+
+
+@bot.message_handler(state=UserState.base)
 def bot_start(message: Message) -> None:
     user_id = message.from_user.id
     user = User.get_or_none(User.user_id == user_id)
@@ -14,6 +18,6 @@ def bot_start(message: Message) -> None:
         User.create(user_id=user_id)
         text = f'Привет, {full_name}!'
     else:
-        text = f'Снова рад тебя видеть, {full_name}'
+        text = f'Снова рад тебя видеть, {full_name}!'
 
-    bot.send_message(message.from_user.id, text)
+    bot.send_message(user_id, text)
