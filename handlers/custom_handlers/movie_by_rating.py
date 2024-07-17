@@ -25,7 +25,8 @@ def get_movie_rating(message: Message) -> None:
     try:
         rating = validate_rating(rating=message.text.strip())
         result = api_movie_by_rating(rating=rating, user_id=user_id)
-        handle_movie_result.bot_handle_movie_result(user_id=user_id, result=result)
+        if not handle_movie_result.bot_handle_movie_result(user_id=user_id, result=result):
+            return
 
     except Exception as exc:
         bot.send_message(user_id, f'Произошла ошибка: {exc}. Введи команду ещё раз')

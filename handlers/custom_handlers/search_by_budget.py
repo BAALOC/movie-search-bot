@@ -1,0 +1,26 @@
+from telebot.types import Message
+from api.api import api_search_by_budget
+from loader import bot
+from utils import check_registration, handle_movie_result, validate_history
+from keyboards.inline.pagination import bot_send_movie_page, get_movie_info
+
+
+@bot.message_handler(func=lambda message: message.text in ['/low_budget_movie', '/high_budget_movie'])
+def bot_low_budget(message: Message) -> None:
+    user_id = message.from_user.id
+    bot.send_message(user_id, 'Твой запрос обрабатывается, это может занять какое-то время')
+    if not check_registration.bot_check_registration(user_id):
+        bot.send_message(user_id, 'Ты не зарегистрирован! Нажми /start чтобы продолжить')
+        return
+
+    try:
+        result = api_search_by_budget(user_id=user_id, command=message.text[1:])
+        if not handle_movie_result.bot_handle_movie_result(user_id=user_id, result=result):
+            return
+    except Exception as exc:
+        bot.send_message(user_id, f'Произошла ошибка: {exc}. Введи команду ещё раз')
+        return
+
+    movie_info = get_movie_info(result=result)
+    validate_history.bot_validate_history(user_id=user_id, movie_info=movie_info)
+    bot_send_movie_page(user_id=user_id, data_dict=result)

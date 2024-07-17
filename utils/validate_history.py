@@ -12,13 +12,13 @@ def bot_validate_history(user_id: int, movie_info: str) -> None:
     movie, created = Movie.get_or_create(
         user=user_id,
         info=movie_info,
-        defaults={'date': datetime.now().strftime(DATE_FORMAT)}
+        date=datetime.now().strftime(DATE_FORMAT)
     )
 
     if not created:
         if movie.is_watched:
             movie.delete_instance()
-            Movie.create(user=user_id, date=datetime.now(), info=movie_info, is_watched=True)
+            Movie.create(user=user_id, date=datetime.now().strftime(DATE_FORMAT), info=movie_info, is_watched=True)
         else:
             movie.delete_instance()
-            Movie.create(user=user_id, date=datetime.now(), info=movie_info)
+            Movie.create(user=user_id, date=datetime.now().strftime(DATE_FORMAT), info=movie_info)

@@ -1,4 +1,5 @@
 from telegram_bot_pagination import InlineKeyboardPaginator
+from telebot.types import CallbackQuery
 
 from loader import bot
 
@@ -43,7 +44,7 @@ def get_movie_info(result: dict, page: int = 1) -> str:
 
 
 @bot.callback_query_handler(func=lambda call: call.data.split('#')[0] == 'movie_page')
-def movie_page_callback(call) -> None:
+def movie_page_callback(call: CallbackQuery) -> None:
     page = int(call.data.split('#')[1])
     user_id = call.from_user.id
 

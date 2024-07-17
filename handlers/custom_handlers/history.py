@@ -18,4 +18,4 @@ def bot_history(message: Message) -> None:
         bot.send_message(message.chat.id, 'Твоя история поиска пуста')
         return
 
-    history_pagination.send_movie_page(message, list(movies))
+    history_pagination.send_movie_page(message=message, data=list(movies))

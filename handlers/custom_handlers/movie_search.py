@@ -26,7 +26,8 @@ def get_movie_name(message: Message) -> None:
     try:
         movie_name = message.text.strip().lower()
         result = api_movie_search(movie_name=movie_name, user_id=user_id)
-        handle_movie_result.bot_handle_movie_result(user_id=user_id, result=result)
+        if not handle_movie_result.bot_handle_movie_result(user_id=user_id, result=result):
+            return
 
     except Exception as exc:
         bot.send_message(user_id, f'Произошла ошибка: {exc}. Введи команду ещё раз')

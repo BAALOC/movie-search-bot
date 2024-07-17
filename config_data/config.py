@@ -16,8 +16,10 @@ DATE_FORMAT = "%d.%m.%Y"
 
 DEFAULT_COMMANDS = (
     ('start', 'Запустить бота'),
-    ('help', 'Справка по боту'),
     ('movie_search', 'Поиск по названию'),
     ('movie_by_rating', 'Поиск по рейтингу'),
-    ('history', 'История поиска')
+    ('history', 'История поиска'),
+    ('high_budget_movie', 'Поиск по высокому бюджету'),
+    ('low_budget_movie', 'Поиск по низкому бюджету'),
+    ('help', 'Справка по боту')
 )

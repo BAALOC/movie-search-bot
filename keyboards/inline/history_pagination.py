@@ -1,4 +1,4 @@
-from telebot.types import Message
+from telebot.types import Message, CallbackQuery
 from loader import bot
 from telegram_bot_pagination import InlineKeyboardPaginator, InlineKeyboardButton
 from database.user_data import Movie
@@ -6,7 +6,7 @@ from database.user_data import Movie
 user_data = {}
 
 
-def send_movie_page(message: Message, data, page=1):
+def send_movie_page(message: Message, data: list, page: int = 1) -> None:
     user_id = message.from_user.id
     user_data[user_id] = data
     paginator = InlineKeyboardPaginator(
@@ -38,7 +38,7 @@ def send_movie_page(message: Message, data, page=1):
 
 
 @bot.callback_query_handler(func=lambda call: call.data.split('#')[0] == 'history_page')
-def movie_page_callback(call):
+def movie_page_callback(call: CallbackQuery) -> None:
     page = int(call.data.split('#')[1])
     user_id = call.from_user.id
 
@@ -47,7 +47,7 @@ def movie_page_callback(call):
 
 
 @bot.callback_query_handler(func=lambda call: call.data.split('#')[0] == 'delete')
-def delete_movie_callback(call):
+def delete_movie_callback(call: CallbackQuery) -> None:
     page = int(call.data.split('#')[1])
     user_id = call.from_user.id
     watched_movie = user_data[user_id][page - 1]
@@ -62,12 +62,12 @@ def delete_movie_callback(call):
     else:
         bot.send_message(
             call.message.chat.id,
-            'Ваша история поиска пуста.'
+            'Твоя история поиска пуста'
         )
 
 
 @bot.callback_query_handler(func=lambda call: call.data.split('#')[0] == 'watched')
-def mark_movie_watched_callback(call):
+def mark_movie_watched_callback(call: CallbackQuery) -> None:
     page = int(call.data.split('#')[1])
     user_id = call.from_user.id
     watched_movie = user_data[user_id][page - 1]
