@@ -1,11 +1,11 @@
 from telebot.types import Message
 
 from api.api import api_movie_search
+from keyboards.inline.pagination import bot_send_movie_page, get_movie_info
 from loader import bot
 from states.user_states import UserState
+from utils import validate_history, handle_movie_result
 from utils.check_registration import bot_check_registration
-from keyboards.inline.pagination import bot_send_movie_page, get_movie_info
-from utils.validate_history import bot_validate_history
 
 
 @bot.message_handler(commands=['movie_search'])
@@ -26,23 +26,15 @@ def get_movie_name(message: Message) -> None:
     try:
         movie_name = message.text.strip().lower()
         result = api_movie_search(movie_name=movie_name, user_id=user_id)
-        handle_movie_result(user_id=user_id, result=result)
+        handle_movie_result.bot_handle_movie_result(user_id=user_id, result=result)
 
     except Exception as exc:
-        bot.send_message(user_id, f'Произошла ошибка: {exc}')
+        bot.send_message(user_id, f'Произошла ошибка: {exc}. Введи команду ещё раз')
+        bot.set_state(user_id, UserState.base)
         return
 
     bot.set_state(user_id, UserState.base)
 
     movie_info = get_movie_info(result=result)
-    bot_validate_history(user_id=user_id, movie_info=movie_info)
+    validate_history.bot_validate_history(user_id=user_id, movie_info=movie_info)
     bot_send_movie_page(user_id=user_id, data_dict=result)
-
-
-def handle_movie_result(user_id: int, result: dict) -> None:
-    if not result:
-        bot.send_message(user_id, 'Ошибка! Попробуй снова')
-        return
-    if not result['docs']:
-        bot.send_message(user_id, 'Такого фильма не найдено')
-        return

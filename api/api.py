@@ -29,3 +29,14 @@ def api_movie_search(movie_name, user_id):
     }
     result = get_request(endpoint, params)
     return result
+
+
+def api_movie_by_rating(rating, user_id):
+    user = User.get(User.user_id == user_id)
+    endpoint = 'movie'
+    params = {
+        'page': 1,
+        'limit': user.search_limit,
+        'rating.imdb': rating
+    }
+    return get_request(endpoint, params)
