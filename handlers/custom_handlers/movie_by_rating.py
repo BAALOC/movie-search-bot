@@ -1,7 +1,9 @@
 from telebot.types import Message
 
 from api.api import api_movie_by_rating
-from keyboards.inline.pagination import bot_send_movie_page, get_movie_info
+from database.user_data import User
+from keyboards.inline import pagination
+from keyboards.reply import main_menu
 from loader import bot
 from states.user_states import UserState
 from utils import check_registration, validate_history, handle_movie_result
@@ -12,10 +14,25 @@ def bot_movie_by_rating(message: Message) -> None:
     user_id = message.from_user.id
 
     if not check_registration.bot_check_registration(user_id):
-        bot.send_message(user_id, 'Ты не зарегистрирован! Нажми /start чтобы продолжить')
+        bot.send_message(
+            user_id,
+            'Ты не зарегистрирован! Нажми /start чтобы продолжить',
+            reply_markup=main_menu.main_menu_gen_markup()
+        )
         return
+    user = User.get(User.user_id == user_id)
+    if user.genres:
+        text = ('Введи рейтинг в диапазоне от 0 до 10, по которому будет происходить поиск. Пример: "7", "8", "7-9"'
+                f'\n\nТвой список жанров: {user.genres}')
+    else:
+        text = ('Введи рейтинг в диапазоне от 0 до 10, по которому будет происходить поиск. Пример: "7", "8", "7-9"'
+                '\n\nТвой список жанров пуст')
 
-    bot.send_message(message.chat.id, 'Введи рейтинг фильма, который хочешь найти\n\nПример: "7-8", "9"')
+    bot.send_message(
+        message.chat.id,
+        text,
+        reply_markup=main_menu.main_menu_gen_markup()
+    )
     bot.set_state(message.from_user.id, UserState.rating)
 
 
@@ -29,15 +46,19 @@ def get_movie_rating(message: Message) -> None:
             return
 
     except Exception as exc:
-        bot.send_message(user_id, f'Произошла ошибка: {exc}. Введи команду ещё раз')
+        bot.send_message(
+            user_id,
+            f'Произошла ошибка: {exc}. Введи команду ещё раз',
+            reply_markup=main_menu.main_menu_gen_markup()
+        )
         bot.set_state(user_id, UserState.base)
         return
 
     bot.set_state(user_id, UserState.base)
 
-    movie_info = get_movie_info(result=result)
+    movie_info = pagination.get_movie_info(result=result)
     validate_history.bot_validate_history(user_id=user_id, movie_info=movie_info)
-    bot_send_movie_page(user_id=user_id, data_dict=result)
+    pagination.bot_send_movie_page(user_id=user_id, data_dict=result)
 
 
 def validate_rating(rating: str) -> str:

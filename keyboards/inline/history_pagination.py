@@ -1,7 +1,9 @@
 from telebot.types import Message, CallbackQuery
-from loader import bot
 from telegram_bot_pagination import InlineKeyboardPaginator, InlineKeyboardButton
+
 from database.user_data import Movie
+from keyboards.reply import main_menu
+from loader import bot
 
 user_data = {}
 
@@ -26,6 +28,7 @@ def send_movie_page(message: Message, data: list, page: int = 1) -> None:
             InlineKeyboardButton('Удалить', callback_data=f'delete#{page}'),
             InlineKeyboardButton('Не просмотрено', callback_data=f'watched#{page}')
         )
+    paginator.add_after(InlineKeyboardButton('◀️Назад', callback_data='back'))
 
     text = f'Дата поиска: {movie.date} | {'Просмотрено✅' if movie.is_watched else 'Не просмотрено❌'}\n{movie.info}'
 
@@ -61,8 +64,9 @@ def delete_movie_callback(call: CallbackQuery) -> None:
         send_movie_page(call.message, user_data[user_id],  max(1, page - 1))
     else:
         bot.send_message(
-            call.message.chat.id,
-            'Твоя история поиска пуста'
+            user_id,
+            'Твоя история поиска пуста',
+            main_menu.main_menu_gen_markup()
         )
 
 

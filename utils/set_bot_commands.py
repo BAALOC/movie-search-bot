@@ -1,9 +1,9 @@
-from telebot.types import BotCommand
+import telebot
 
 from config_data.config import DEFAULT_COMMANDS
 
 
-def set_default_commands(bot):
+def set_default_commands(bot: telebot.TeleBot) -> None:
     bot.set_my_commands(
-        [BotCommand(*i) for i in DEFAULT_COMMANDS]
+        [telebot.types.BotCommand(*i) for i in DEFAULT_COMMANDS]
     )

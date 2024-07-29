@@ -22,6 +22,7 @@ class BaseModel(Model):
 class User(BaseModel):
     user_id = IntegerField(primary_key=True)
     search_limit = IntegerField(default=10)
+    genres = CharField(default=None, null=True)
 
 
 class Movie(BaseModel):

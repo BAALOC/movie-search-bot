@@ -1,6 +1,7 @@
-from telegram_bot_pagination import InlineKeyboardPaginator
 from telebot.types import CallbackQuery
+from telegram_bot_pagination import InlineKeyboardPaginator, InlineKeyboardButton
 
+from keyboards.reply import main_menu
 from loader import bot
 
 user_data = {}
@@ -15,6 +16,7 @@ def bot_send_movie_page(user_id: int, data_dict: dict, page: int = 1) -> None:
     )
 
     info = get_movie_info(data_dict, page)
+    paginator.add_after(InlineKeyboardButton('◀️Назад', callback_data='back'))
 
     bot.send_message(
         user_id,
@@ -50,3 +52,8 @@ def movie_page_callback(call: CallbackQuery) -> None:
 
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot_send_movie_page(user_id=user_id, data_dict=user_data[user_id], page=page)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.split('#')[0] == 'back')
+def movie_page_callback(call):
+    bot.send_message(call.from_user.id, 'Возвращение в главное меню', reply_markup=main_menu.main_menu_gen_markup())

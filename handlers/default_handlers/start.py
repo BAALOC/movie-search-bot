@@ -1,11 +1,9 @@
 from telebot.types import Message
 
 from database.user_data import User
+from keyboards.reply import main_menu
 from loader import bot
 
-
-# user_messages = ['привет', 'старт', 'начало', 'start', '/start']
-# Доделать обработку ключевых слов
 
 @bot.message_handler(commands=['start'])
 def bot_start(message: Message) -> None:
@@ -15,8 +13,15 @@ def bot_start(message: Message) -> None:
 
     if not user:
         User.create(user_id=user_id)
-        text = f'Привет, {full_name}!'
+        greeting = (
+            f'👋 Привет, {full_name}! Я - бот, который позволяет искать фильмы и сериалы прямо из '
+            'чата в Telegram 🎬📺. Я помогу тебе найти интересные фильмы и популярные сериалы, а также '
+            'предоставлю информацию о них. Чтобы продолжить, выбери одну из команд ниже 👇'
+        )
     else:
-        text = f'Снова рад тебя видеть, {full_name}!'
+        greeting = (
+            f'👋 Снова рад тебя видеть, {full_name}! Я помогу тебе искать фильмы и сериалы 🎬📺. '
+            'Ты уже знаешь, как это работает. Чтобы продолжить, выбери одну из команд ниже 👇'
+        )
 
-    bot.send_message(user_id, text)
+    bot.send_message(user_id, greeting, reply_markup=main_menu.main_menu_gen_markup())

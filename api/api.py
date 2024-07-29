@@ -1,5 +1,6 @@
-import requests
 from typing import Dict
+
+import requests
 
 from config_data.config import BASE_API_KEY, API_KEY
 from database.user_data import User
@@ -38,8 +39,14 @@ def api_movie_by_rating(rating: str, user_id: int) -> Dict:
     params = {
         'page': 1,
         'limit': user.search_limit,
-        'rating.imdb': rating
+        'rating.imdb': rating,
+        'notNullFields': ['description', 'name'],
+        'sortField': 'votes.imdb',
+        'sortType': '-1'
     }
+    if user.genres:
+        params['genres.name'] = '+' + user.genres
+
     result = get_request(endpoint=endpoint, params=params)
     return result
 
@@ -50,8 +57,13 @@ def api_search_by_budget(user_id: int, command: str) -> Dict:
     params = {
         'page': 1,
         'limit': user.search_limit,
-        'budget.value': '100000-5000000' if command == 'low_budget_movie' else '20000000-1000000000'
+        'budget.value': '100000-5000000' if command == 'low_budget_movie' else '20000000-1000000000',
+        'notNullFields': ['description', 'name'],
+        'sortField': 'votes.imdb',
+        'sortType': '-1'
     }
+    if user.genres:
+        params['genres.name'] = '+' + user.genres
+
     result = get_request(endpoint=endpoint, params=params)
     return result
-
