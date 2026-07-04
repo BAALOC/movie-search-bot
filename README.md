@@ -1,189 +1,67 @@
-# Телеграм-бот для поиска фильмов
+# Movie Search Bot
 
-## Описание
+## About
 
-Этот телеграм-бот позволяет пользователям искать фильмы прямо из чата в Telegram.
-Он реализует поиск фильмов/сериалов, фильтрация их по рейтингу и просмотр истории запросов.
+A Telegram bot for searching movies and series via the [Kinopoisk API](https://api.kinopoisk.dev). Users can look up titles by name, IMDB rating, or production budget, browse paginated results with inline keyboards, and track a personal search history with watched/unwatched status.
 
-## Функции
+## Features
 
-- **movie_search**: Поиск фильма/сериала по названию.
-- **movie_by_rating**: Поиск фильмов/сериалов по рейтингу.
-- **low_budget_movie**: Поиск фильмов/сериалов с низким бюджетом.
-- **high_budget_movie**: Поиск фильмов/сериалов с высоким бюджетом.
-- **history**: Просмотр истории запросов, 
-с возможностью фильтрации по дате и отметкой фильмов/сериалов как просмотренных или непросмотренных.
-- **settings**: Настройки поиска.
+- **Title search** — query the Kinopoisk `/movie/search` endpoint and page through results inline.
+- **Rating filter** — find movies by exact IMDB rating, sorted by vote count; genre filter applied from user settings.
+- **Budget search** — separate commands for low-budget ($100K–$5M) and high-budget ($20M–$1B) films.
+- **Search history** — persistent per-user log with date filtering and watched/unwatched toggle.
+- **Per-user settings** — configurable result limit and genre whitelist, stored in SQLite and applied on every API request.
 
-### Информация о фильме/сериале включает:
+## Tech stack
 
-- Название
-- Описание
-- Рейтинг
-- Год производства
-- Жанр
-- Возрастной рейтинг
-- Постер
+**Bot layer**
+- pyTelegramBotAPI 3.17.6 — handler registration, FSM states, inline/reply keyboards
+- python-telegram-bot-pagination — inline paginator for multi-result displays
 
-### Информация в истории запросов включает:
+**Data**
+- Peewee ORM + SQLite — two models: `User` (settings) and `Movie` (history entries)
 
-- Дата поиска
-- Название фильма/сериала
-- Описание фильма/сериала
-- Рейтинг
-- Год производства
-- Жанр
-- Возрастной рейтинг
-- Постер
+**External API**
+- Kinopoisk API v1.4 — `movie/search` (by title) and `movie` (filter queries)
 
-## Собственные команды
+**Config**
+- python-dotenv — `BOT_TOKEN` and `API_KEY` loaded from `.env`
 
-### 1. `/movie_search`
+## Architecture
 
-**Описание:** 
-Для поиска фильма/сериала по названию.
+Handlers are registered by import side-effect: `main.py` does `import handlers`, which triggers `handlers/__init__.py` to import every submodule, attaching all `@bot.message_handler` and `@bot.callback_query_handler` decorators at startup.
 
-**Пример команды:** 
-`/movie_search Начало`
+Multi-step input flows (e.g. "send me the movie title") use pyTelegramBotAPI's `StatesGroup` with `StateMemoryStorage`. Each command sets a state; the follow-up handler filters on `state=UserState.X`, then resets to `UserState.base`.
 
-**Запрос к API**: 
-`GET https://api.kinopoisk.dev/v1.3/movie?name=Начало`
+Pagination keeps the current result set in a module-level `dict` keyed by `user_id`. This is intentionally in-memory — it resets on restart and isn't meant for persistence.
 
-**Ответ бота:**
+## Setup
+
+1. Get a Kinopoisk API key from [@kinopoiskdev_bot](https://t.me/kinopoiskdev_bot) on Telegram.
+
+2. Create `.env` in the project root:
+   ```
+   BOT_TOKEN=your_telegram_bot_token
+   API_KEY=your_kinopoisk_api_key
+   ```
+
+3. Install dependencies:
+   ```sh
+   uv pip install -r requirements.txt
+   ```
+
+4. Run:
+   ```sh
+   python main.py
+   ```
+
+## Usage
+
 ```
-Название: Начало
-Описание: Вор, который крадет корпоративные секреты с помощью технологии совместного сна...
-Рейтинг: 8.8
-Год: 2010
-Жанр: Фантастика, Боевик
-Возрастной рейтинг: 13+
-Постер: [изображение постера]
-```
-
-### 2. `/movie_by_rating`
-
-**Описание:**
-Поиск фильмов/сериалов по рейтингу.
-
-**Пример команды:** 
-`/movie_by_rating 8.8`
-
-**Запрос к API**: 
-`GET https://api.kinopoisk.dev/v1.3/movie?rating.kp=8.8`
-
-**Ответ бота:**
-```
-Название: Начало
-Описание: Вор, который крадет корпоративные секреты с помощью технологии совместного сна...
-Рейтинг: 8.8
-Год: 2010
-Жанр: Фантастика, Боевик
-Возрастной рейтинг: 13+
-Постер: [изображение постера]
+/movie_search
+> Bot: Enter a movie title
+You: Inception
+> Bot: [paginated inline results with title, description, IMDB rating, year, genre, age rating, poster]
 ```
 
-### 3. `/low_budget_movie`
-
-**Описание:**
-Поиск фильмов/сериалов с низким бюджетом.
-
-**Пример команды:** 
-`/low_budget_movie`
-
-**Запрос к API**: 
-`GET https://api.kinopoisk.dev/v1.3/movie?budget=<низкий_бюджет>`
-
-**Ответ бота:**
-```
-Название: Ведьма из Блэр: Курсовая с того света
-Описание: Трое студентов отправляются в лес Мэриленда для съемок документального фильма...
-Рейтинг: 6.4
-Год: 1999
-Жанр: Ужасы
-Возрастной рейтинг: 18+
-Постер: [изображение постера]
-```
-
-### 4. `/high_budget_movie`
-
-**Описание:** 
-Поиск фильмов/сериалов с высоким  бюджетом.
-
-**Пример команды:** 
-`/high_budget_movie`
-
-**Запрос к API**: 
-`GET https://api.kinopoisk.dev/v1.3/movie?budget=<высокий_бюджет>`
-
-**Ответ бота:**
-```
-Название: Мстители: Финал
-Описание: После разрушительных событий "Войны бесконечности" Мстители собираются вновь...
-Рейтинг: 8.4
-Год: 2019
-Жанр: Фантастика, Боевик
-Возрастной рейтинг: 13+
-Постер: [изображение постера]
-```
-
-### 5. `/history`
-
-**Описание:** 
-Просмотр истории запросов, с возможностью фильтрации по дате и
-отметкой фильмов/сериалов как просмотренных или непросмотренных.
-
-**Пример команды:** 
-`/history`
-
-**Ответ бота:**
-```
-Дата: 2023-06-24
-Название: Начало
-Описание: Вор, который крадет корпоративные секреты с помощью технологии совместного сна...
-Рейтинг: 8.8
-Год: 2010
-Жанр: Фантастика, Боевик
-Возрастной рейтинг: 13+
-Постер: [изображение постера]
-```
-
-### 5. `/settings`
-
-**Описание:** 
-Настройка количества выводимых фильмов, жанров и возможность удалить историю поиска.
-
-**Пример команды:** 
-`/settings`
-
-### Базовые команды:
-
-**/start** - старт, приветствует пользователя, выводит информацию о себе и список команд.
-
-**/help** - помощь, выводит список своих команд.
-
-## Установка и запуск
-
-1. **Клонируйте репозиторий:**
-    ```sh
-    git clone https://gitlab.skillbox.ru/makar_poloumnyi/python_basic_diploma
-    cd python_basic_diploma
-    ```
-
-2. **Установите зависимости:**
-    ```sh
-    pip install -r requirements.txt
-    ```
-
-3. **Настройте переменные окружения:**
-    Создайте файл `.env` в корневом каталоге проекта и добавьте следующие строки:
-    ```
-    BOT_TOKEN=ваш_токен_телеграм
-    API_KEY=ваш_ключ_API(из https://t.me/kinopoiskdev_bot)
-    ```
-
-4. **Запустите бота:**
-    ```sh
-    python main.py
-    ```
-
-
+Use the inline arrow buttons to page through results. The `◀️ Back` button returns to the main menu. All searched titles are automatically saved to your history (`/history`).
